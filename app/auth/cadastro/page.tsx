@@ -118,50 +118,24 @@ export default function CadastroPage() {
         nomeFazenda: fazenda
       }
       
-      // Tenta cadastrar pela API ou armazena localmente como fallback
-      try {
-        // Tenta chamar a API de cadastro
-        const response = await fetch('/api/auth/cadastro', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(novoUsuario)
-        })
-        
-        const data = await response.json()
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Erro ao cadastrar usuário')
-        }
-        
-        console.log('Usuário cadastrado com sucesso pela API:', data.usuario)
-        
-      } catch (apiError) {
-        console.error('Erro ao chamar API de cadastro:', apiError)
-        
-        // Fallback: Armazena dados localmente para permitir login
-        // em sistemas de demonstração sem backend
-        const usuariosCadastrados = JSON.parse(localStorage.getItem('usuarios_cadastrados') || '[]')
-        usuariosCadastrados.push({
-          id: Date.now().toString(),
-          nome,
-          email,
-          senha,
-          fazenda,
-          dataCriacao: new Date().toISOString()
-        })
-        localStorage.setItem('usuarios_cadastrados', JSON.stringify(usuariosCadastrados))
-        
-        // Adiciona às credenciais válidas no login (para sistemas de demonstração)
-        const credenciaisValidas = JSON.parse(localStorage.getItem('credenciais_validas') || '[]')
-        credenciaisValidas.push({ email, senha })
-        localStorage.setItem('credenciais_validas', JSON.stringify(credenciaisValidas))
-        
-        console.log('Usuário armazenado localmente para demonstração')
+      // Chamar a API de cadastro
+      const response = await fetch('/api/auth/cadastro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(novoUsuario)
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao cadastrar usuário')
       }
       
-      // Simula delay para mostrar loading (opcional)
+      console.log('Usuário cadastrado com sucesso:', data.usuario)
+      
+      // Aguardar um pouco antes de redirecionar
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Redirecionar para a página de sucesso

@@ -78,99 +78,23 @@ export default function LoginPage() {
       setErro('')
       setCarregando(true)
       
-      // Tenta fazer login com a API se disponível, ou usa as credenciais hardcoded como fallback
-      try {
-        // Tenta chamar a API de login
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, senha: password })
-        })
-        
-        const data = await response.json()
-        
-        if (response.ok && data.success) {
-          // Login bem-sucedido via API
-          setSucessoLogin(true)
-          
-          // Armazenar token JWT
-          localStorage.setItem('auth_token', data.token)
-          
-          // Armazenar email se "lembrar-me" estiver ativado
-          if (rememberMe) {
-            localStorage.setItem('remembered_email', email)
-          } else {
-            localStorage.removeItem('remembered_email')
-          }
-          
-          // Aguardar um pouco para mostrar a mensagem de sucesso
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          // Redirecionar para o dashboard
-          router.push('/dashboard')
-          return
-        }
-      } catch (apiError) {
-        console.error("Erro ao chamar API de login:", apiError)
-        // Continua para o fallback se a API falhar
-      }
+      // Chamar a API de login
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, senha: password })
+      })
       
-      // Verificar credenciais armazenadas localmente (usuários cadastrados pela interface)
-      try {
-        const credenciaisLocais = JSON.parse(localStorage.getItem('credenciais_validas') || '[]')
-        
-        const credencialLocalValida = credenciaisLocais.some(
-          (cred: any) => cred.email.toLowerCase() === email.toLowerCase() && cred.senha === password
-        )
-        
-        if (credencialLocalValida) {
-          // Login bem-sucedido com credencial local
-          setSucessoLogin(true)
-          
-          // Armazenar token JWT simulado
-          localStorage.setItem('auth_token', 'jwt_token_simulado_local')
-          
-          // Armazenar email se "lembrar-me" estiver ativado
-          if (rememberMe) {
-            localStorage.setItem('remembered_email', email)
-          } else {
-            localStorage.removeItem('remembered_email')
-          }
-          
-          // Aguardar um pouco para mostrar a mensagem de sucesso
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          // Redirecionar para o dashboard
-          router.push('/dashboard')
-          return
-        }
-      } catch (localError) {
-        console.error("Erro ao verificar credenciais locais:", localError)
-        // Continua para o próximo fallback
-      }
+      const data = await response.json()
       
-      // Fallback: Validação com credenciais hardcoded
-      const credenciaisValidas = [
-        { email: 'admin@example.com', senha: 'senha123' },
-        { email: 'gerente@example.com', senha: 'senha123' },
-        { email: 'usuario@example.com', senha: 'senha123' },
-        { email: 'teste@teste.com', senha: 'teste123' },
-        // Adicionar todas as credenciais criadas via página de cadastro aqui também
-        // para permitir login mesmo sem a API funcionando
-      ]
-      
-      const credencialValida = credenciaisValidas.some(
-        cred => cred.email.toLowerCase() === email.toLowerCase() && cred.senha === password
-      )
-      
-      if (credencialValida) {
-        // Mostrar mensagem de sucesso antes de redirecionar
+      if (response.ok && data.success) {
+        // Login bem-sucedido
         setSucessoLogin(true)
         
-        // Armazenar token JWT simulado
-        localStorage.setItem('auth_token', 'jwt_token_simulado')
+        // Armazenar token JWT
+        localStorage.setItem('auth_token', data.token)
         
         // Armazenar email se "lembrar-me" estiver ativado
         if (rememberMe) {
@@ -185,8 +109,8 @@ export default function LoginPage() {
         // Redirecionar para o dashboard
         router.push('/dashboard')
       } else {
-        setErro('Email ou senha incorretos')
-        setMostrarDica(true) // Mostrar dica de credenciais
+        // Login falhou
+        setErro(data.message || 'Email ou senha incorretos')
         setTentativas(prev => prev + 1)
         
         // Limpar o formulário após muitas tentativas
@@ -254,26 +178,6 @@ export default function LoginPage() {
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-primary-500 rounded-full"></span>
           </h2>
           
-          {/* Informações de login (visível sempre) */}
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6 animate-fadeIn shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-start">
-              <FaInfoCircle className="text-blue-500 mt-1 mr-2 flex-shrink-0 animate-pulse-custom" />
-              <div>
-                <p className="text-sm font-medium mb-1">Credenciais para demonstração:</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-white rounded p-2 shadow-sm border border-blue-100">
-                    <p className="font-semibold">Email:</p>
-                    <p className="text-primary-600">admin@example.com</p>
-                  </div>
-                  <div className="bg-white rounded p-2 shadow-sm border border-blue-100">
-                    <p className="font-semibold">Senha:</p>
-                    <p className="text-primary-600">senha123</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           {/* Mensagem de sucesso */}
           {sucessoLogin && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-6 animate-fadeIn shadow-sm flex items-center">
@@ -289,11 +193,6 @@ export default function LoginPage() {
                 <FaExclamationCircle className="w-5 h-5 mr-2 text-red-500" />
                 {erro}
               </p>
-              {mostrarDica && tentativas >= 2 && (
-                <p className="text-xs mt-2 text-red-600">
-                  Dica: Tente usar uma das credenciais de demonstração acima.
-                </p>
-              )}
             </div>
           )}
           

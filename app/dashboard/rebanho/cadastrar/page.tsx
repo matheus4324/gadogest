@@ -72,16 +72,28 @@ export default function CadastrarAnimal() {
     setMensagem({ tipo: '', texto: '' })
     
     try {
-      // Simulação de cadastro (em ambiente real, isso seria uma chamada à API)
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
       // Dados do animal formatados para envio
       const dadosAnimal = {
         ...formData,
         peso: Number(formData.peso)
       }
       
-      console.log('Animal cadastrado:', dadosAnimal)
+      // Enviar dados para a API
+      const response = await fetch('/api/animais/cadastrar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dadosAnimal)
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao cadastrar animal')
+      }
+      
+      console.log('Animal cadastrado com sucesso:', data.animal)
       
       // Mostrar mensagem de sucesso
       setMensagem({ 
@@ -94,11 +106,11 @@ export default function CadastrarAnimal() {
         router.push('/dashboard/rebanho')
       }, 2000)
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao cadastrar animal:', error)
       setMensagem({ 
         tipo: 'erro', 
-        texto: 'Erro ao cadastrar animal. Tente novamente.' 
+        texto: error.message || 'Erro ao cadastrar animal. Tente novamente.' 
       })
     } finally {
       setCarregando(false)

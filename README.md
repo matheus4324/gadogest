@@ -134,4 +134,86 @@ Sistema completo para gerenciamento de fazendas de gado, incluindo controle de r
 
 ## Licença
 
-Este projeto está licenciado sob a Licença MIT. 
+Este projeto está licenciado sob a Licença MIT.
+
+## Banco de Dados
+
+O GadoGest utiliza MongoDB como banco de dados para armazenar todos os dados do sistema. Seguem as instruções para configuração:
+
+### Configuração do MongoDB Atlas
+
+1. **Crie uma conta no MongoDB Atlas**:
+   - Acesse [https://www.mongodb.com/cloud/atlas/register](https://www.mongodb.com/cloud/atlas/register)
+   - Faça o cadastro e crie um cluster gratuito (Free Tier)
+
+2. **Configure seu cluster**:
+   - Escolha a opção gratuita
+   - Selecione um provedor (AWS, Google Cloud ou Azure) e uma região próxima ao Brasil
+   - Mantenha as configurações padrão e clique em "Create Cluster"
+
+3. **Configure o acesso ao banco**:
+   - Em "Security" > "Database Access", crie um usuário com senha
+   - Em "Security" > "Network Access", adicione seu IP atual ou permita acesso de qualquer lugar (0.0.0.0/0) para desenvolvimento
+
+4. **Obtenha sua string de conexão**:
+   - No cluster, clique em "Connect"
+   - Escolha "Connect your application"
+   - Copie a string de conexão para o arquivo `.env.local`
+
+### Configuração no Projeto
+
+1. **Crie um arquivo `.env.local` na raiz do projeto com as seguintes variáveis**:
+
+```
+# Configuração do MongoDB
+MONGODB_URI=mongodb+srv://<seu_usuario>:<sua_senha>@cluster0.mongodb.net/gadogest?retryWrites=true&w=majority
+
+# JWT Secret para autenticação
+JWT_SECRET=seu_jwt_secret_muito_seguro_para_producao
+
+# Variáveis de ambiente
+NODE_ENV=production
+```
+
+2. **Substitua os valores**:
+   - `<seu_usuario>` e `<sua_senha>` pelos valores reais que você configurou no MongoDB Atlas
+   - `JWT_SECRET` por uma string aleatória e segura
+
+### Inicialização do Banco de Dados
+
+Após configurar o MongoDB, você precisa inicializar o banco de dados com um usuário administrador para poder acessar o sistema:
+
+1. **Acesse a URL de inicialização**:
+   ```
+   https://seu-dominio.vercel.app/api/inicializar?codigo=gadogest_inicializar_2024
+   ```
+   Ou localmente:
+   ```
+   http://localhost:3000/api/inicializar?codigo=gadogest_inicializar_2024
+   ```
+
+2. **Dados do usuário administrador inicial**:
+   - **Email**: admin@gadogest.com
+   - **Senha**: admin123
+
+3. **Segurança**:
+   - Após o primeiro acesso, recomendamos fortemente que você altere a senha do administrador
+   - Em ambiente de produção, você deve alterar o código de acesso no arquivo `app/api/inicializar/route.ts`
+
+### Modelos de Dados
+
+O sistema utiliza os seguintes modelos para armazenar os dados:
+
+1. **Usuario**: Armazena informações dos usuários e credenciais de acesso
+2. **Animal**: Armazena informações dos animais do rebanho
+3. **SaudeAnimal**: Registros de saúde e procedimentos veterinários
+4. **Financeiro**: Registros financeiros, receitas e despesas
+
+### API REST
+
+O sistema utiliza APIs RESTful para comunicação entre frontend e backend:
+
+1. `/api/auth/*`: Autenticação e gerenciamento de usuários
+2. `/api/animais/*`: Gerenciamento do rebanho
+3. `/api/saude/*`: Registros de saúde animal
+4. `/api/financeiro/*`: Controle financeiro 
