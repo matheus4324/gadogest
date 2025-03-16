@@ -109,24 +109,67 @@ export default function CadastroPage() {
       setErro('')
       setCarregando(true)
       
-      // Simulação de cadastro (em ambiente real, isso seria uma chamada à API)
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
       // Dados do novo usuário
       const novoUsuario = {
         nome,
         email,
-        fazenda,
-        senha
+        senha,
+        confirmarSenha,
+        nomeFazenda: fazenda
       }
       
-      console.log('Novo usuário cadastrado:', novoUsuario)
+      // Tenta cadastrar pela API ou armazena localmente como fallback
+      try {
+        // Tenta chamar a API de cadastro
+        const response = await fetch('/api/auth/cadastro', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(novoUsuario)
+        })
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Erro ao cadastrar usuário')
+        }
+        
+        console.log('Usuário cadastrado com sucesso pela API:', data.usuario)
+        
+      } catch (apiError) {
+        console.error('Erro ao chamar API de cadastro:', apiError)
+        
+        // Fallback: Armazena dados localmente para permitir login
+        // em sistemas de demonstração sem backend
+        const usuariosCadastrados = JSON.parse(localStorage.getItem('usuarios_cadastrados') || '[]')
+        usuariosCadastrados.push({
+          id: Date.now().toString(),
+          nome,
+          email,
+          senha,
+          fazenda,
+          dataCriacao: new Date().toISOString()
+        })
+        localStorage.setItem('usuarios_cadastrados', JSON.stringify(usuariosCadastrados))
+        
+        // Adiciona às credenciais válidas no login (para sistemas de demonstração)
+        const credenciaisValidas = JSON.parse(localStorage.getItem('credenciais_validas') || '[]')
+        credenciaisValidas.push({ email, senha })
+        localStorage.setItem('credenciais_validas', JSON.stringify(credenciaisValidas))
+        
+        console.log('Usuário armazenado localmente para demonstração')
+      }
+      
+      // Simula delay para mostrar loading (opcional)
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Redirecionar para a página de sucesso
       router.push('/auth/cadastro-sucesso')
-    } catch (error) {
-      setErro('Erro ao realizar cadastro. Tente novamente.')
-      console.error(error)
+      
+    } catch (error: any) {
+      console.error('Erro ao realizar cadastro:', error)
+      setErro(error.message || 'Erro ao realizar cadastro. Tente novamente.')
     } finally {
       setCarregando(false)
     }

@@ -78,19 +78,91 @@ export default function LoginPage() {
       setErro('')
       setCarregando(true)
       
-      // Simulação de login (em ambiente real, isso seria uma chamada à API)
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Tenta fazer login com a API se disponível, ou usa as credenciais hardcoded como fallback
+      try {
+        // Tenta chamar a API de login
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, senha: password })
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok && data.success) {
+          // Login bem-sucedido via API
+          setSucessoLogin(true)
+          
+          // Armazenar token JWT
+          localStorage.setItem('auth_token', data.token)
+          
+          // Armazenar email se "lembrar-me" estiver ativado
+          if (rememberMe) {
+            localStorage.setItem('remembered_email', email)
+          } else {
+            localStorage.removeItem('remembered_email')
+          }
+          
+          // Aguardar um pouco para mostrar a mensagem de sucesso
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          // Redirecionar para o dashboard
+          router.push('/dashboard')
+          return
+        }
+      } catch (apiError) {
+        console.error("Erro ao chamar API de login:", apiError)
+        // Continua para o fallback se a API falhar
+      }
       
-      // Versão modificada da validação para aceitar mais credenciais
+      // Verificar credenciais armazenadas localmente (usuários cadastrados pela interface)
+      try {
+        const credenciaisLocais = JSON.parse(localStorage.getItem('credenciais_validas') || '[]')
+        
+        const credencialLocalValida = credenciaisLocais.some(
+          (cred: any) => cred.email.toLowerCase() === email.toLowerCase() && cred.senha === password
+        )
+        
+        if (credencialLocalValida) {
+          // Login bem-sucedido com credencial local
+          setSucessoLogin(true)
+          
+          // Armazenar token JWT simulado
+          localStorage.setItem('auth_token', 'jwt_token_simulado_local')
+          
+          // Armazenar email se "lembrar-me" estiver ativado
+          if (rememberMe) {
+            localStorage.setItem('remembered_email', email)
+          } else {
+            localStorage.removeItem('remembered_email')
+          }
+          
+          // Aguardar um pouco para mostrar a mensagem de sucesso
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          // Redirecionar para o dashboard
+          router.push('/dashboard')
+          return
+        }
+      } catch (localError) {
+        console.error("Erro ao verificar credenciais locais:", localError)
+        // Continua para o próximo fallback
+      }
+      
+      // Fallback: Validação com credenciais hardcoded
       const credenciaisValidas = [
         { email: 'admin@example.com', senha: 'senha123' },
         { email: 'gerente@example.com', senha: 'senha123' },
         { email: 'usuario@example.com', senha: 'senha123' },
         { email: 'teste@teste.com', senha: 'teste123' },
+        // Adicionar todas as credenciais criadas via página de cadastro aqui também
+        // para permitir login mesmo sem a API funcionando
       ]
       
       const credencialValida = credenciaisValidas.some(
-        cred => cred.email === email && cred.senha === password
+        cred => cred.email.toLowerCase() === email.toLowerCase() && cred.senha === password
       )
       
       if (credencialValida) {
